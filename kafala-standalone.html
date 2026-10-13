@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>سجل الكفالة</title>
+<style>
+:root{--bg:#EEF2F0;--surface:#FFFFFF;--ink:#1D2B36;--muted:#62707A;--line:#D5DDD9;--paid:#2E7D5B;--paid-ink:#FFFFFF;--now:#E0A526;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121A20;--surface:#1B252D;--ink:#E6ECEF;--muted:#93A1AA;--line:#2C3943;--paid:#3FA174;--paid-ink:#0E1A14;--now:#E8B547}}
+:root[data-theme="dark"]{--bg:#121A20;--surface:#1B252D;--ink:#E6ECEF;--muted:#93A1AA;--line:#2C3943;--paid:#3FA174;--paid-ink:#0E1A14;--now:#E8B547}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;font-size:17px;line-height:1.5}
+.wrap{max-width:560px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+h1{font-size:1.35rem;margin:0}
+.year{display:flex;align-items:center;gap:4px}
+.year button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:1.1rem}
+.year span{font-weight:700;min-width:3.2em;text-align:center}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{flex:1;padding:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;font:inherit;font-weight:600}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.months{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:8px;scrollbar-width:none}
+.months button{flex:none;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:.95rem;position:relative}
+.months button.cur::after{content:"";position:absolute;top:4px;left:6px;width:7px;height:7px;border-radius:50%;background:var(--now)}
+.months button[aria-pressed="true"]{background:var(--paid);color:var(--paid-ink);border-color:var(--paid)}
+.summary{color:var(--muted);margin:4px 2px 10px;font-size:.95rem}
+.list{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:60px}
+.row .name{flex:1;font-weight:600;font-size:1.05rem}
+.row .when{display:block;font-weight:400;font-size:.8rem;color:var(--muted)}
+.pay{min-width:96px;padding:10px 12px;border-radius:10px;border:2px dashed var(--line);background:transparent;color:var(--muted);font:inherit;font-weight:700}
+.pay.done{border:2px solid var(--paid);background:var(--paid);color:var(--paid-ink)}
+.del{border:none;background:none;color:#C0392B;font:inherit;font-size:.9rem}
+.add{display:flex;gap:8px;margin-top:14px}
+.add input{flex:1;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit}
+.add button,.btn{padding:12px 16px;border-radius:10px;border:none;background:var(--ink);color:var(--bg);font:inherit;font-weight:700}
+.link{background:none;border:none;color:var(--muted);font:inherit;text-decoration:underline;margin-top:14px}
+.empty{text-align:center;color:var(--muted);padding:28px 8px}
+.gridwrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;font-size:.85rem;min-width:100%}
+th,td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+th:first-child,td:first-child{text-align:right;position:sticky;right:0;background:var(--surface);font-weight:600;padding-right:10px}
+td.y{color:var(--paid);font-weight:700}
+td.n{color:var(--line)}
+th.cur{color:var(--now)}
+dialog{border:none;border-radius:16px;padding:20px;max-width:340px;width:calc(100% - 32px);background:var(--surface);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog p{margin:0 0 16px;font-size:1.1rem}
+dialog .acts{display:flex;gap:8px}
+dialog .acts button{flex:1;padding:12px;border-radius:10px;font:inherit;font-weight:700;border:1px solid var(--line);background:transparent;color:var(--ink)}
+dialog .acts .ok{background:var(--paid);color:var(--paid-ink);border-color:var(--paid)}
+.status{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:.9rem;display:none}
+button:focus-visible,input:focus-visible{outline:3px solid var(--now);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>سجل الكفالة</h1>
+    <div class="year"><button id="yPrev" aria-label="السنة السابقة">›</button><span id="yLabel"></span><button id="yNext" aria-label="السنة التالية">‹</button></div>
+  </header>
+  <div class="tabs"><button id="tPay" aria-pressed="true">تسجيل دفعة</button><button id="tGrid" aria-pressed="false">الجدول الكامل</button></div>
+  <main id="app"></main>
+</div>
+<dialog id="dlg"><p id="dlgText"></p><div class="acts"><button class="ok" id="dlgOk">تأكيد</button><button id="dlgNo">إلغاء</button></div></dialog>
+<div class="status" id="status"></div>
+<script>
+const MONTHS=['كانون الثاني','شباط','آذار','نيسان','أيار','حزيران','تموز','آب','أيلول','تشرين الأول','تشرين الثاني','كانون الأول'];
+const now=new Date();
+let S={people:[],paid:{}};
+let mode='local',busy=false,editing=false;
+try{const l=localStorage.getItem('kafala-state');if(l)S=JSON.parse(l)}catch(e){}
+let view='pay',year=now.getFullYear(),month=now.getMonth();
+const $=id=>document.getElementById(id);
+const key=(y,m)=>y+'-'+String(m+1).padStart(2,'0');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(t,ms){const s=$('status');s.textContent=t;s.style.display='block';clearTimeout(toast.t);if(ms)toast.t=setTimeout(()=>s.style.display='none',ms)}
+function confirmBox(text){return new Promise(r=>{$('dlgText').textContent=text;const d=$('dlg');const done=v=>{d.close();r(v)};$('dlgOk').onclick=()=>done(true);$('dlgNo').onclick=()=>done(false);d.showModal()})}
+function save(){
+  try{localStorage.setItem('kafala-state',JSON.stringify(S));toast('تم الحفظ',1200)}catch(e){toast('تعذّر الحفظ',3000)}
+  render();
+}
+function backup(){
+  const blob=new Blob([JSON.stringify(S)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='kafala-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+}
+function restore(f){
+  const r=new FileReader();r.onload=async()=>{try{const d=JSON.parse(r.result);if(!d.people||!d.paid)throw 0;
+    if(await confirmBox('استبدال البيانات الحالية بالنسخة الاحتياطية؟')){S=d;save()}}catch(e){toast('الملف غير صالح',3000)}};r.readAsText(f);
+}
+function renderPay(){
+  const k=key(year,month),p=S.paid[k]||{};
+  const count=S.people.filter(x=>p[x.id]).length;
+  let h='<div class="months">'+MONTHS.map((m,i)=>`<button data-m="${i}" aria-pressed="${i===month}" class="${year===now.getFullYear()&&i===now.getMonth()?'cur':''}">${m}</button>`).join('')+'</div>';
+  if(!S.people.length){h+='<div class="empty">أضيفي أسماء الأشخاص للبدء.</div>'}
+  else{
+    h+=`<div class="summary">${MONTHS[month]} ${year}: دفع ${count} من ${S.people.length}</div><div class="list">`;
+    h+=S.people.map(x=>{const d=p[x.id];return `<div class="row"><div class="name">${esc(x.name)}${d?`<span class="when">سُجّل ${esc(d)}</span>`:''}</div>${editing?`<button class="del" data-del="${x.id}">حذف</button>`:`<button class="pay ${d?'done':''}" data-p="${x.id}" ${mode==='readonly'?'disabled':''}>${d?'✓ دفع':'اضغط للدفع'}</button>`}</div>`}).join('');
+    h+='</div>';
+  }
+  if(mode!=='readonly'){
+    if(editing||!S.people.length)h+='<div class="add"><input id="nm" placeholder="اسم الشخص" autocomplete="off"><button id="addBtn">إضافة</button></div>';
+    if(S.people.length)h+=`<button class="link" id="editBtn">${editing?'تم':'تعديل الأسماء'}</button>`;
+  }
+  $('app').innerHTML=h;
+  const cur=$('app').querySelector('.months [aria-pressed="true"]');if(cur)cur.scrollIntoView({inline:'center',block:'nearest'});
+}
+function renderGrid(){
+  if(!S.people.length){$('app').innerHTML='<div class="empty">لا يوجد أسماء بعد.</div>';return}
+  let h='<div class="gridwrap"><table><thead><tr><th>الاسم</th>'+MONTHS.map((m,i)=>`<th class="${year===now.getFullYear()&&i===now.getMonth()?'cur':''}">${m}</th>`).join('')+'<th>المجموع</th></tr></thead><tbody>';
+  h+=S.people.map(x=>{let n=0;const c=MONTHS.map((_,i)=>{const ok=(S.paid[key(year,i)]||{})[x.id];if(ok)n++;return ok?'<td class="y">✓</td>':'<td class="n">—</td>'}).join('');return `<tr><td>${esc(x.name)}</td>${c}<td>${n}</td></tr>`}).join('');
+  h+='</tbody></table></div>';
+  $('app').innerHTML=h+'<div class="add"><button class="btn" id="bkBtn">حفظ نسخة احتياطية</button><button class="btn" id="rsBtn">استرجاع نسخة</button></div><input type="file" id="rsFile" accept=".json,application/json" hidden>';
+}
+function render(){$('yLabel').textContent=year;$('tPay').setAttribute('aria-pressed',view==='pay');$('tGrid').setAttribute('aria-pressed',view==='grid');view==='pay'?renderPay():renderGrid()}
+$('app').addEventListener('click',async e=>{
+  const b=e.target.closest('button');if(!b||busy)return;
+  if(b.dataset.m){month=+b.dataset.m;render();return}
+  if(b.dataset.p){
+    const x=S.people.find(q=>q.id===b.dataset.p),k=key(year,month),paid=(S.paid[k]||{})[x.id];
+    const ok=await confirmBox(paid?`إلغاء دفعة ${x.name} لشهر ${MONTHS[month]} ${year}؟`:`${x.name} دفع كفالة ${MONTHS[month]} ${year}؟`);
+    if(!ok)return;
+    S.paid[k]=S.paid[k]||{};
+    if(paid)delete S.paid[k][x.id];else S.paid[k][x.id]=new Date().toLocaleDateString('ar-SY');
+    save();return}
+  if(b.dataset.del){const x=S.people.find(q=>q.id===b.dataset.del);if(!await confirmBox(`حذف ${x.name} من القائمة؟`))return;S.people=S.people.filter(q=>q.id!==x.id);Object.values(S.paid).forEach(m=>delete m[x.id]);save();return}
+  if(b.id==='bkBtn'){backup();return}
+  if(b.id==='rsBtn'){$('rsFile').click();return}
+  if(b.id==='editBtn'){editing=!editing;render();return}
+  if(b.id==='addBtn'){const v=$('nm').value.trim();if(!v)return;S.people.push({id:'p'+Date.now().toString(36),name:v});save()}
+});
+$('app').addEventListener('change',e=>{if(e.target.id==='rsFile'&&e.target.files[0])restore(e.target.files[0])});
+$('app').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='nm')$('addBtn').click()});
+$('yPrev').onclick=()=>{year--;render()};$('yNext').onclick=()=>{year++;render()};
+$('tPay').onclick=()=>{view='pay';render()};$('tGrid').onclick=()=>{view='grid';render()};
+render();
+</script>
+</body>
+</html>
